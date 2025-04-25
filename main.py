@@ -1,7 +1,11 @@
 import sentry_sdk
 import random
 import traceback
+import os
 from typing import Dict, List, Optional
+
+# Environment variable to control error triggering
+TRIGGER_TEST_ERROR = os.environ.get("TRIGGER_TEST_ERROR", "true").lower() == "true"
 
 class CustomError(Exception):
     """Custom error class for demonstration purposes."""
@@ -63,7 +67,18 @@ def complex_error_scenario():
 
 def main():
     print("Hello from sentry-test!")
-    complex_error_scenario()
+    
+    if TRIGGER_TEST_ERROR:
+        try:
+            division_by_zero = 1 / 0
+        except ZeroDivisionError as e:
+            sentry_sdk.set_context("error_info", {
+                "type": "test_error",
+                "purpose": "Sentry integration testing"
+            })
+            raise
+    else:
+        print("Test error disabled. Set TRIGGER_TEST_ERROR=true to generate a test error.")
 
 
 sentry_sdk.init(
